@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /*
+   * Linear, bảng màu lạnh. Tối là mặc định; sáng khi người dùng chọn (data-theme="light")
+   * hoặc khi để "theo hệ thống" và hệ điều hành đang ở chế độ sáng.
+   * .theme-dark ép một vùng luôn dùng token tối (hero ảnh) dù trang đang ở chế độ sáng.
+   */
+  :root,
+  .theme-dark {
+    --primary: 250 125 43; /* #fa7d2b cam viền logo — 7.7:1 trên nền tối */
+    --primary-foreground: 8 8 8; /* chữ trắng trên cam chỉ 2.6:1 */
+    --secondary: 39 166 68; /* #27a644 success */
+    --secondary-foreground: 255 255 255;
+    --background: 8 8 8; /* #080808 */
+    --surface: 25 29 32; /* #191d20 */
+    --subtle: 21 22 22; /* #151616 border-frame: nền lõm, ô nhập */
+    --muted: 36 40 44; /* #24282c border-thin: hover, skeleton */
+    --foreground: 255 255 255; /* #ffffff */
+    --muted-foreground: 156 157 161; /* #9c9da1 */
+    --border: 42 46 51; /* #2a2e33 */
+    --border-strong: 62 62 68; /* #3e3e44 */
+    --danger: 243 78 82; /* #f34e52 */
+    --highlight: 196 254 11; /* #c4fe0b xanh chanh logo — chỉ làm nền, chữ đen */
+    --highlight-foreground: 8 8 8;
+    /* Màu mark biểu đồ: #e8691a (cam logo đậm một bậc — #fa7d2b vượt dải độ sáng trên nền tối) */
+    --chart: 232 105 26;
+    --shadow-sm: 0 1px #0006;
+    --shadow-md: 0 4px 12px #00000026;
+    --shadow-lg: 0 8px 32px #08090a;
+    --shadow-xl: 0 0 32px #0006, 0 0 0 1px #000;
+    color-scheme: dark;
+  }
+
+  /* Bộ token sáng — khai báo hai lần vì CSS không gộp được media query với selector thuộc tính */
+  :root[data-theme='light'] {
+    --primary: 204 10 19; /* #cc0a13 đỏ chữ logo — 5.2:1 trên nền sáng; cam chỉ 2.4:1 */
+    --primary-foreground: 255 255 255;
+    --secondary: 39 166 68; /* #27a644 */
+    --secondary-foreground: 255 255 255;
+    --background: 244 242 244; /* #f4f2f4 color-bg-tertiary */
+    --surface: 255 255 255; /* #ffffff */
+    --subtle: 244 242 244; /* #f4f2f4 */
+    --muted: 226 228 231; /* #e2e4e7 color-button-invert-bg */
+    --foreground: 8 8 8; /* #080808 */
+    --muted-foreground: 88 90 92; /* #585a5c — 6.9:1 trên nền trắng */
+    --border: 226 228 231; /* #e2e4e7 */
+    --border-strong: 210 215 222; /* #d2d7de */
+    --danger: 243 78 82; /* #f34e52 */
+    --highlight: 196 254 11;
+    --highlight-foreground: 8 8 8;
+    --chart: 204 10 19; /* #cc0a13 */
+    --shadow-sm: 0 1px #00000014;
+    --shadow-md: 0 0 0 1px #00000014, 0 4px 12px #0000000d;
+    --shadow-lg: 0 8px 32px #08090a0d, 0 0 0 1px #00000014;
+    --shadow-xl: 0 0 32px #00000014, 0 0 0 1px #00000014;
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme='dark']) {
+      --primary: 204 10 19;
+      --primary-foreground: 255 255 255;
+      --secondary: 39 166 68;
+      --secondary-foreground: 255 255 255;
+      --background: 244 242 244;
+      --surface: 255 255 255;
+      --subtle: 244 242 244;
+      --muted: 226 228 231;
+      --foreground: 8 8 8;
+      --muted-foreground: 88 90 92;
+      --border: 226 228 231;
+      --border-strong: 210 215 222;
+      --danger: 243 78 82;
+      --highlight: 196 254 11;
+      --highlight-foreground: 8 8 8;
+      --chart: 204 10 19;
+      --shadow-sm: 0 1px #00000014;
+      --shadow-md: 0 0 0 1px #00000014, 0 4px 12px #0000000d;
+      --shadow-lg: 0 8px 32px #08090a0d, 0 0 0 1px #00000014;
+      --shadow-xl: 0 0 32px #00000014, 0 0 0 1px #00000014;
+      color-scheme: light;
+    }
+  }
+
+  body {
+    @apply bg-background text-sm text-foreground antialiased;
+    font-feature-settings: 'cv01', 'ss03';
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply tracking-tight;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+  }
+
+  ::selection {
+    background: rgb(var(--primary) / 0.32);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 12px);
+  }
+  /* Gradient nhấn: ánh sáng accent rất nhẹ phía trên, như hero của Linear */
+  .glow-accent {
+    background-image: radial-gradient(ellipse 80% 60% at 50% 0%, rgb(var(--primary) / 0.18), transparent 70%);
+  }
+  /*
+   * Lớp phủ tối nhẹ trên ảnh nền hero (hero luôn ở .theme-dark nên --background là #080808).
+   * Phủ sáng sẽ làm ảnh món ăn bị rửa trôi; phủ tối giữ được màu và độ tương phản.
+   * Vùng đậm có kích thước cố định ôm khối chữ để chữ trắng luôn đọc rõ, rìa mỏng để ảnh lộ rõ;
+   * mép trên/dưới tối hơn một chút cho header và thanh điều khiển.
+   */
+  .hero-scrim {
+    background-image:
+      radial-gradient(ellipse 720px 320px at 50% 44%, rgb(var(--background) / 0.62) 30%, rgb(var(--background) / 0.18) 100%),
+      linear-gradient(to bottom, rgb(var(--background) / 0.35), transparent 22%, transparent 72%, rgb(var(--background) / 0.6) 100%);
+  }
+  .text-gradient {
+    background-image: linear-gradient(180deg, rgb(var(--foreground)) 30%, rgb(var(--muted-foreground)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}

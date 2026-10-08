@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: foodhub
+          POSTGRES_PASSWORD: foodhub
+          POSTGRES_DB: foodhub
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U foodhub" --health-interval 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://foodhub:foodhub@localhost:5432/foodhub
+      JWT_ACCESS_SECRET: ci-access-secret-0123456789abcdef0123
+      JWT_REFRESH_SECRET: ci-refresh-secret-0123456789abcdef012
+      API_URL: http://localhost:4000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @foodhub/api prisma:deploy
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm build
+
+  # deploy-staging: thêm bước triển khai (Vercel cho web, Render/VPS cho api) khi có secret
