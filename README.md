@@ -42,6 +42,23 @@ pnpm dev            # web :3000, api :4000
 
 Mã giảm giá: `CHAOBAN` (10%, tối đa 30k, đơn từ 50k), `GIAM20K` (20k, đơn từ 150k).
 
+## Sao lưu & khôi phục
+
+```bash
+pnpm db:backup   # → backups/<ngày_giờ>/ gồm foodhub.dump, foodhub.sql và thư mục uploads/
+```
+
+`backups/` không được đưa lên git (chứa dữ liệu khách hàng) — hãy chép sang ổ khác / cloud.
+
+Khôi phục từ `foodhub.dump` (ghi đè dữ liệu hiện tại — dừng API trước):
+
+```bash
+docker cp backups/<ngày_giờ>/foodhub.dump foodhub-postgres-1:/tmp/foodhub.dump
+docker exec foodhub-postgres-1 pg_restore -U foodhub -d foodhub --clean --if-exists --no-owner /tmp/foodhub.dump
+```
+
+Ảnh: chép `backups/<ngày_giờ>/uploads/` trở lại `apps/api/uploads/`. Trên Git Bash, đặt `MSYS_NO_PATHCONV=1` trước lệnh để đường dẫn `/tmp` không bị đổi.
+
 ## Kiểm thử
 
 ```bash
