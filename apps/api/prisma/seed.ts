@@ -110,10 +110,17 @@ function seedUsers(): { email: string; fullName: string; role: Role; password: s
       { email: 'khach@foodhub.local', fullName: 'Khách Thử Nghiệm', role: 'CUSTOMER', password: 'Khach@12345' },
     ];
   }
-  const email = process.env.SEED_ADMIN_EMAIL;
+  const email = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
   const password = process.env.SEED_ADMIN_PASSWORD;
-  if (!email || !password || password.length < 12) {
-    console.warn('Bỏ qua tạo admin: đặt SEED_ADMIN_EMAIL và SEED_ADMIN_PASSWORD (≥ 12 ký tự) để tạo tài khoản quản trị.');
+  // Nêu rõ thiếu gì (không in giá trị) để dễ sửa trên dashboard
+  const problems = [
+    !email && 'chưa có SEED_ADMIN_EMAIL',
+    email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) && 'SEED_ADMIN_EMAIL không phải email hợp lệ',
+    !password && 'chưa có SEED_ADMIN_PASSWORD',
+    password && password.length < 12 && `SEED_ADMIN_PASSWORD mới ${password.length} ký tự (cần ≥ 12)`,
+  ].filter(Boolean);
+  if (problems.length || !email || !password) {
+    console.warn(`Bỏ qua tạo admin: ${problems.join('; ')}.`);
     return [];
   }
   return [{ email, fullName: 'Quản trị', role: 'ADMIN', password }];
