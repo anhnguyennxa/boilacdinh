@@ -7,19 +7,19 @@ import { ProductGrid } from '@/components/product/product-grid';
 import { ProductImage } from '@/components/product/product-image';
 import { ProductOptionsForm } from '@/components/product/product-options-form';
 import { Badge } from '@/components/ui/misc';
-import { getProduct, getProducts, getRelated, NotFoundError } from '@/lib/api';
+import { getProduct, getRelated, NotFoundError } from '@/lib/api';
 
 export const revalidate = 300;
 
 type Params = Promise<{ slug: string }>;
 
+/**
+ * Không dựng sẵn trang món lúc build: mỗi trang được render ở lượt xem đầu rồi cache 5 phút (ISR).
+ * Nhờ vậy build web không phụ thuộc API — trước đây push code làm Render và Vercel cùng deploy,
+ * API đang khởi động lại nên build treo quá 60 giây/trang và thất bại.
+ */
 export async function generateStaticParams() {
-  try {
-    const { data } = await getProducts({ limit: 100 });
-    return data.map((p) => ({ slug: p.slug }));
-  } catch {
-    return []; // API chưa chạy lúc build → render theo yêu cầu rồi cache (ISR)
-  }
+  return [];
 }
 
 async function load(slug: string) {
