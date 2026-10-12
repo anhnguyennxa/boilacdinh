@@ -30,6 +30,9 @@ services:
       WEB_URL: http://web:3000
     ports:
       - "4000:4000"
+    volumes:
+      # Ảnh món tải lên (khi không dùng Cloudinary) — giữ lại khi tạo lại container
+      - uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -50,5 +53,25 @@ services:
       - api
     profiles: ["full"]
 
+  # Sao lưu hằng ngày lúc 03:00 giờ VN (20:00 UTC) vào ./backups, giữ 14 bản
+  backup:
+    image: postgres:16-alpine
+    environment:
+      PGHOST: postgres
+      PGUSER: foodhub
+      PGPASSWORD: foodhub
+      PGDATABASE: foodhub
+      BACKUP_KEEP: "14"
+    volumes:
+      - ./backups:/backups
+      - uploads:/uploads:ro
+      - ./scripts/pg-backup.sh:/usr/local/bin/pg-backup.sh:ro
+    entrypoint: ["sh", "-c", "echo '0 20 * * * sh /usr/local/bin/pg-backup.sh' > /etc/crontabs/root && exec crond -f -l 8"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles: ["full"]
+
 volumes:
   pgdata:
+  uploads:

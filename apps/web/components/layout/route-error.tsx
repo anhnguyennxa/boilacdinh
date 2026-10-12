@@ -5,11 +5,13 @@ import Link from 'next/link';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/misc';
+import { reportError } from '@/lib/sentry-client';
 
 /** Hiện khi không tải được dữ liệu (thường do API đang khởi động lại) — thay cho trang lỗi 500 trơn. */
 export function RouteError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
     console.error(error);
+    reportError(error);
   }, [error]);
 
   return (

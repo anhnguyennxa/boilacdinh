@@ -25,7 +25,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         <>
           <p className="mt-1 text-sm text-muted-foreground">{results.meta.total} món phù hợp</p>
           <div className="mt-5">
-            <ProductGrid products={results.data} />
+            <ProductGrid products={results.data} priorityCount={2} />
           </div>
         </>
       )}

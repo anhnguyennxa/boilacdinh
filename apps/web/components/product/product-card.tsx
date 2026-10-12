@@ -2,12 +2,16 @@
 
 import type { ProductSummaryDto } from '@foodhub/shared';
 import { Plus, Star } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { PriceTag } from './price-tag';
 import { ProductImage } from './product-image';
-import { ProductOptionsDialog } from './product-options-dialog';
+
+// Hộp chọn tùy chọn không nằm trong JS ban đầu: tải trước khi khách rê chuột/chạm vào nút thêm
+const loadDialog = () => import('./product-options-dialog');
+const ProductOptionsDialog = dynamic(() => loadDialog().then((m) => m.ProductOptionsDialog), { ssr: false });
 
 export function ProductCard({ product, priority }: { product: ProductSummaryDto; priority?: boolean }) {
   const [open, setOpen] = useState(false);
@@ -58,6 +62,9 @@ export function ProductCard({ product, priority }: { product: ProductSummaryDto;
         <button
           type="button"
           onClick={() => setOpen(true)}
+          onPointerEnter={loadDialog}
+          onFocus={loadDialog}
+          onTouchStart={loadDialog}
           disabled={soldOut}
           className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground transition-[background-color,transform] duration-150 ease-out hover:bg-primary/90 active:scale-95 disabled:bg-muted disabled:text-muted-foreground"
           aria-label={`Thêm ${product.name} vào giỏ`}

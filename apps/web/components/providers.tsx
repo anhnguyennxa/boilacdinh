@@ -6,6 +6,7 @@ import { Toaster } from 'sonner';
 import { CartOwnerSync } from '@/components/cart/cart-owner-sync';
 import { useTheme } from '@/hooks/useTheme';
 import { refreshSession } from '@/lib/api-client';
+import { initSentry } from '@/lib/sentry-client';
 import { useCartStore } from '@/stores/cart-store';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -19,6 +20,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     useCartStore.persist.rehydrate();
     // Khôi phục phiên từ cookie refresh token (nếu có)
     void refreshSession();
+    initSentry();
   }, []);
 
   return (

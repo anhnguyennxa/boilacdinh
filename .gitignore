@@ -13,3 +13,8 @@ apps/api/uploads
 
 # Bản sao lưu dữ liệu (chứa thông tin khách hàng)
 backups/
+
+# Kết quả kiểm thử e2e / Lighthouse
+apps/web/test-results/
+apps/web/playwright-report/
+lighthouse/

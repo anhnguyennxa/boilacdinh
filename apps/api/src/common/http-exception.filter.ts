@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import * as Sentry from '@sentry/nestjs';
 import type { Response } from 'express';
 
 /** Mọi lỗi trả về dạng { statusCode, message, error }. */
@@ -35,6 +36,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
 
     this.logger.error(exception);
+    // Chỉ lỗi không lường trước (500) mới gửi Sentry; no-op khi chưa cấu hình SENTRY_DSN
+    Sentry.captureException(exception);
     return res
       .status(500)
       .json({ statusCode: 500, message: 'Lỗi máy chủ, vui lòng thử lại', error: 'INTERNAL_SERVER_ERROR' });

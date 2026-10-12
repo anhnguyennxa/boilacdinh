@@ -25,7 +25,12 @@ export function refreshSession(): Promise<boolean> {
         useAuthStore.getState().clear();
         return false;
       }
-      const { data } = (await res.json()) as { data: { accessToken: string; user: UserDto } };
+      const { data } = (await res.json()) as { data: { accessToken: string; user: UserDto } | null };
+      // null: chưa từng đăng nhập trên trình duyệt này
+      if (!data) {
+        useAuthStore.getState().clear();
+        return false;
+      }
       useAuthStore.getState().setSession(data);
       return true;
     } catch {

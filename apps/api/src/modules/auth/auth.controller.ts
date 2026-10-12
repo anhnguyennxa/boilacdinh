@@ -42,6 +42,9 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(200)
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    // Khách chưa đăng nhập (không có cookie) là trạng thái bình thường, không phải lỗi:
+    // trả null thay vì 401 để trình duyệt không báo lỗi đỏ trên mọi lượt xem trang.
+    if (!req.cookies?.[REFRESH_COOKIE]) return null;
     try {
       return this.withCookie(res, await this.auth.refresh(req.cookies?.[REFRESH_COOKIE]));
     } catch (err) {

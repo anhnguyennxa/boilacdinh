@@ -4,6 +4,7 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsDefined,
   IsEnum,
   IsInt,
   IsOptional,
@@ -74,6 +75,7 @@ export class CreateOrderDto {
   customerPhone: string;
 
   @ValidateIf((o: CreateOrderDto) => o.deliveryType === 'DELIVERY')
+  @IsDefined({ message: 'Vui lòng nhập địa chỉ giao hàng' })
   @ValidateNested()
   @Type(() => DeliveryAddressInput)
   address?: DeliveryAddressInput;

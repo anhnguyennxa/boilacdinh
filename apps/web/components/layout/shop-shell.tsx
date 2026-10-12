@@ -1,4 +1,4 @@
-import { CartDrawer } from '@/components/cart/cart-drawer';
+import { LazyCartDrawer } from '@/components/cart/lazy-cart-drawer';
 import { MobileCartBar } from '@/components/cart/mobile-cart-bar';
 import { cn } from '@/lib/utils';
 import { Footer } from './footer';
@@ -14,7 +14,7 @@ export function ShopShell({ children, bleed }: { children: React.ReactNode; blee
       <Header />
       <main className={cn('min-h-[60vh]', !bleed && 'mx-auto max-w-container px-4')}>{children}</main>
       <Footer />
-      <CartDrawer />
+      <LazyCartDrawer />
       <MobileCartBar />
     </>
   );

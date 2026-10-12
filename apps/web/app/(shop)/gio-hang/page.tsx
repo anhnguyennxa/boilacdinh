@@ -3,7 +3,7 @@
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { CartLine } from '@/components/cart/cart-line';
-import { FreeShipProgress } from '@/components/cart/cart-drawer';
+import { FreeShipProgress } from '@/components/cart/free-ship-progress';
 import { CouponInput } from '@/components/cart/coupon-input';
 import { SummaryRows } from '@/components/cart/order-summary';
 import { Button } from '@/components/ui/button';

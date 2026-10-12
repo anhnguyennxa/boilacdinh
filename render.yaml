@@ -1,0 +1,66 @@
+# Render Blueprint — API (Docker) + PostgreSQL + Redis, region Singapore (gần VN nhất).
+# Dùng: Render Dashboard → New → Blueprint → chọn repo này. Web (Next.js) deploy trên Vercel, xem README.
+# Gói (plan) chỉ là gợi ý — chỉnh theo ngân sách trước khi tạo.
+services:
+  - type: web
+    name: boilacdinh-api
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: ./apps/api/Dockerfile
+    region: singapore
+    plan: starter
+    healthCheckPath: /api/v1/health
+    autoDeploy: false # deploy qua hook từ GitHub Actions sau khi CI xanh
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: boilacdinh-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: boilacdinh-redis
+          property: connectionString
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      # Điền tay trong Dashboard (sync: false = không lưu trong file này)
+      - key: WEB_URL # https://ten-mien-web (Vercel)
+        sync: false
+      - key: API_PUBLIC_URL # https://boilacdinh-api.onrender.com — cổng thanh toán gọi về
+        sync: false
+      - key: REVALIDATE_SECRET # trùng với biến cùng tên bên Vercel
+        sync: false
+      - key: CLOUDINARY_URL # bắt buộc trên Render: ổ đĩa container không lưu lâu dài ảnh tải lên
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: VNPAY_TMN_CODE
+        sync: false
+      - key: VNPAY_HASH_SECRET
+        sync: false
+      - key: MOMO_PARTNER_CODE
+        sync: false
+      - key: MOMO_ACCESS_KEY
+        sync: false
+      - key: MOMO_SECRET_KEY
+        sync: false
+
+  - type: keyvalue
+    name: boilacdinh-redis
+    region: singapore
+    plan: free
+    maxmemoryPolicy: allkeys-lru # chỉ dùng làm cache
+    ipAllowList: [] # chỉ dịch vụ nội bộ Render truy cập được
+
+databases:
+  - name: boilacdinh-db
+    region: singapore
+    plan: basic-256mb # gói trả phí mới có sao lưu tự động (point-in-time recovery)
+    postgresMajorVersion: "16"
+    databaseName: foodhub
+    user: foodhub
+    ipAllowList: []

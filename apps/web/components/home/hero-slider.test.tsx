@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { HeroSlide } from '@/lib/hero-slides';
 import { HeroSlider } from './hero-slider';
@@ -56,8 +56,12 @@ describe('HeroSlider', () => {
     expect(caption()).toHaveTextContent('Phở');
   });
 
-  it('chỉ tải trước ảnh hiện tại và ảnh kế tiếp', () => {
+  it('lúc đầu chỉ tải ảnh đầu (LCP); trang rảnh mới tải trước ảnh kế tiếp', () => {
+    vi.useFakeTimers();
     const { container } = render(<HeroSlider slides={slides}>nội dung</HeroSlider>);
+    expect(container.querySelectorAll('img')).toHaveLength(1);
+    act(() => vi.runAllTimers());
     expect(container.querySelectorAll('img')).toHaveLength(2);
+    vi.useRealTimers();
   });
 });

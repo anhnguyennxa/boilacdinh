@@ -8,11 +8,15 @@ import { ProductCard } from './product-card';
 /** 1 cột (mobile) → 2 (sm) → 3 (md) → 4 (lg) */
 export const GRID = 'grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4';
 
-export function ProductGrid({ products }: { products: ProductSummaryDto[] }) {
+/**
+ * priorityCount: số ảnh đầu tải ưu tiên — chỉ đặt cho lưới nằm ngay màn hình đầu.
+ * Lưới nằm dưới hero (trang chủ, món liên quan) để 0, không tranh băng thông với ảnh LCP.
+ */
+export function ProductGrid({ products, priorityCount = 0 }: { products: ProductSummaryDto[]; priorityCount?: number }) {
   return (
     <div className={GRID}>
       {products.map((p, i) => (
-        <ProductCard key={p.id} product={p} priority={i < 4} />
+        <ProductCard key={p.id} product={p} priority={i < priorityCount} />
       ))}
     </div>
   );

@@ -59,6 +59,16 @@ export class CacheService implements OnModuleDestroy {
     }
   }
 
+  /** Cho health check: "disabled" khi không cấu hình REDIS_URL. */
+  async ping(): Promise<'up' | 'down' | 'disabled'> {
+    if (!this.redis) return 'disabled';
+    try {
+      return (await this.redis.ping()) === 'PONG' ? 'up' : 'down';
+    } catch {
+      return 'down';
+    }
+  }
+
   private ready() {
     return this.redis?.status === 'ready';
   }

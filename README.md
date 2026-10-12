@@ -48,7 +48,15 @@ Mã giảm giá: `CHAOBAN` (10%, tối đa 30k, đơn từ 50k), `GIAM20K` (20k,
 pnpm db:backup   # → backups/<ngày_giờ>/ gồm foodhub.dump, foodhub.sql và thư mục uploads/
 ```
 
-`backups/` không được đưa lên git (chứa dữ liệu khách hàng) — hãy chép sang ổ khác / cloud.
+`backups/` không được đưa lên git (chứa dữ liệu khách hàng) — hãy chép sang ổ khác / cloud. Mỗi lần chạy giữ lại 14 bản gần nhất (`BACKUP_KEEP=0` để giữ tất cả).
+
+Chạy tự động mỗi ngày lúc 03:00 trên Windows (Task Scheduler, chạy một lần trong PowerShell):
+
+```powershell
+schtasks /Create /TN "BoiLacDinh-Backup" /SC DAILY /ST 03:00 /TR "cmd /c cd /d \"D:\DU LIEU CUA ANH\Boilacdinh\foodhub\" && node scripts\backup.mjs >> backups\backup.log 2>&1"
+```
+
+Trên VPS (docker compose `--profile full`), service `backup` tự chạy 03:00 và ghi `backups/db_<UTC>.dump` + `uploads_<UTC>.tar.gz`.
 
 Khôi phục từ `foodhub.dump` (ghi đè dữ liệu hiện tại — dừng API trước):
 
@@ -62,10 +70,16 @@ docker exec foodhub-postgres-1 pg_restore -U foodhub -d foodhub --clean --if-exi
 ## Kiểm thử
 
 ```bash
-pnpm test    # shared: node:test · api: Jest · web: Vitest + Testing Library
+pnpm test    # unit — shared: node:test · api: Jest · web: Vitest + Testing Library
 pnpm lint    # kiểm tra kiểu TypeScript toàn bộ workspace
 pnpm build
+pnpm --filter @foodhub/api test:e2e   # luồng đặt hàng trên API thật + PostgreSQL (database foodhub_test)
+pnpm --filter @foodhub/web test:e2e   # Playwright: mua hàng, mã giảm giá, theo dõi đơn realtime, quản trị (desktop + mobile)
+sh scripts/lighthouse.sh / /thuc-don  # Lighthouse mobile, 3 lần lấy trung vị (cần bản build đang chạy)
 ```
+
+- **E2E API** tự tạo database `foodhub_test` (`prisma migrate deploy` + seed), không đụng dữ liệu dev; chạy lại bao nhiêu lần cũng được.
+- **E2E web** dùng web/API đang chạy ở cổng 3001/4000 (chưa chạy thì tự bật bản build). Đơn tạo trong lúc test được hủy ở cuối, không tính vào doanh thu. Trên máy dev dùng Chrome đã cài; CI dùng Chromium của Playwright.
 
 ## Đã làm
 
@@ -81,6 +95,7 @@ pnpm build
 | Quản trị (GĐ 5) | `/admin` tổng quan hôm nay; `/admin/don-hang` bảng đơn realtime + tìm theo mã/SĐT/tên không dấu; `/admin/mon` danh sách + sửa nhanh giá/còn món, form thêm/sửa món (slug tự sinh, tải ảnh, nhóm tùy chọn có mẫu Size/Đường/Đá/Topping); `/admin/danh-muc`; `/admin/khuyen-mai` (trạng thái, lượt dùng, bật hiện trang chủ); `/admin/bao-cao` (doanh thu theo ngày giờ VN, so với kỳ trước, theo phương thức thanh toán, top món; bảng thay thế cho biểu đồ). Nhân viên chỉ thấy bảng đơn. Không xóa được danh mục còn món / mã đã có đơn; xóa món/danh mục là xóa mềm và trả lại slug |
 | Ảnh món | `POST /admin/uploads`: kiểm tra magic bytes (chỉ JPG/PNG/WebP thật), tối đa 5MB, tên file ngẫu nhiên. Không có `CLOUDINARY_URL` thì lưu `apps/api/uploads` và phục vụ tại `/uploads` (web proxy cùng domain, cache 1 năm); có thì upload có chữ ký lên Cloudinary (chưa thử với khóa thật) |
 | Hero ảnh chuyển động | Hero trang chủ có nền ảnh món tự chuyển (mờ dần + zoom chậm Ken Burns, 6 giây/ảnh), vùng hero luôn dùng token tối (`.theme-dark`) với lớp phủ đen nhẹ để ảnh giữ màu và chữ trắng đọc rõ ở cả hai theme (phủ sáng làm ảnh bị bạc), chú thích "Trong ảnh: <món>" dẫn tới trang món, thanh tiến trình chọn ảnh + nút tạm dừng. Tự dừng khi rê chuột/focus, khi tab ẩn, và không tự chạy nếu bật giảm chuyển động. Chỉ tải trước ảnh hiện tại + kế tiếp. Ảnh lấy từ Unsplash (giấy phép miễn phí) — thay bằng ảnh thật của quán trong `apps/web/lib/hero-slides.ts` |
+| Kiểm thử & vận hành (GĐ 6) | E2E API (Supertest, 9 kịch bản: thực đơn, giá tính ở server, mã giảm giá, quyền xem đơn, refresh token, luồng trạng thái, VNPay giả lập + chữ ký sai + IPN lặp, đối soát hủy đơn quá hạn) và E2E web (Playwright, desktop + mobile, gồm cập nhật realtime qua Socket.IO). Log JSON bằng Pino (mỗi request 1 dòng, có `x-request-id`, không ghi token/cookie). Sentry cho API và web (chỉ bật khi có DSN; SDK trình duyệt tải lười sau khi trang load). `GET /api/v1/health` kiểm tra database + Redis cho giám sát uptime. Sao lưu hằng ngày (service `backup` trong docker-compose hoặc `pnpm db:backup`), giữ 14 bản. CI: lint → test → build → e2e → Lighthouse → deploy staging; production deploy tay có duyệt. Tối ưu tải trang: gói `@foodhub/shared` xuất ESM để tree-shake (trang chủ bớt ~130KB JS), ngăn kéo giỏ hàng/hộp tùy chọn tải khi mở, ảnh hero thứ hai tải sau khi trang load |
 | Hero ưu đãi | Trang chủ có khối "Ưu đãi hôm nay" lấy từ `GET /coupons/public`: chỉ mã `is_public`, còn hạn, còn lượt, xếp theo mức giảm. Thẻ chính + thẻ vé; sao chép mã, "Áp dụng" gắn mã vào giỏ (server vẫn kiểm tra lại lúc thanh toán); hiện điều kiện, hạn dùng, số lượt còn. Admin sửa mã → xóa cache Redis và `revalidateTag('promos')`. Muốn quảng bá mã thì đặt `isPublic: true` (+ `description`) qua `POST/PATCH /admin/coupons` |
 
 ## Chưa làm (giai đoạn sau)
@@ -88,7 +103,19 @@ pnpm build
 - Hoàn tiền qua API cổng thanh toán (hiện trang quản trị chỉ gắn nhãn "Cần hoàn tiền" cho đơn đã trả nhưng bị hủy).
 - Đăng nhập Google, đánh giá món (bảng `reviews` đã sẵn) — món seed vẫn dùng ảnh minh họa emoji cho tới khi tải ảnh thật.
 - Quản lý người dùng/nhân viên trên giao diện (API `GET /admin/users` đã có), xuất báo cáo CSV/Excel.
-- Giai đoạn 6: BullMQ email, Sentry, Pino, e2e Playwright/Supertest, tối ưu Lighthouse, deploy, sao lưu.
+- Email xác nhận đơn (BullMQ) — kế hoạch có nhắc, chưa làm.
+- Deploy thật: cần chọn nền tảng/tên miền và tạo tài khoản (xem "Triển khai" bên dưới).
+
+## Triển khai
+
+Theo kế hoạch: **Vercel** cho web, **Render** cho API + PostgreSQL + Redis (region Singapore).
+
+1. **Render** → New → Blueprint → chọn repo: `render.yaml` tạo API (Docker), database, Redis. Điền các biến `sync: false` (WEB_URL, API_PUBLIC_URL, REVALIDATE_SECRET, CLOUDINARY_URL, SENTRY_DSN, khóa VNPay/MoMo). Ổ đĩa container trên Render không giữ file → **bắt buộc dùng Cloudinary** cho ảnh món. Migration chạy tự động khi container khởi động; lần đầu chạy seed bằng Render Shell: `npx prisma db seed`.
+2. **Vercel** → Import repo, Root Directory `apps/web`. Biến môi trường: `API_URL` và `NEXT_PUBLIC_SOCKET_URL` (= URL API trên Render), `REVALIDATE_SECRET`, `NEXT_PUBLIC_SITE_URL` (tên miền web), tùy chọn `SENTRY_DSN`/`NEXT_PUBLIC_SENTRY_DSN`. `API_URL` được đóng vào bản build (rewrites) — đổi thì phải build lại.
+3. **GitHub** → Settings → Environments: tạo `staging` và `production` (bật *Required reviewers* cho production). Secrets: `STAGING_API_DEPLOY_HOOK`, `STAGING_WEB_DEPLOY_HOOK`, `PRODUCTION_API_DEPLOY_HOOK`, `PRODUCTION_WEB_DEPLOY_HOOK` (Deploy Hook URL của Render/Vercel); biến `PRODUCTION_HEALTH_URL` = `https://<api>/api/v1/health`. Push `main` → CI xanh → staging tự deploy; production: Actions → *Deploy production* → gõ `deploy`.
+4. **Giám sát**: tạo monitor HTTP cho `/api/v1/health` (UptimeRobot/Better Stack, 1–5 phút) và trang chủ. Sentry: tạo 2 project (Node, Next.js) rồi điền DSN.
+
+Tự host trên VPS: `docker compose --profile full up -d --build` (thêm service `backup` chạy 03:00 hằng ngày vào `./backups`, giữ 14 bản). Đặt Caddy/Nginx phía trước để có HTTPS; build image web với `--build-arg API_URL=...`.
 
 ## Thanh toán VNPay / MoMo
 

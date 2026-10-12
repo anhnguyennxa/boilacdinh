@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { Providers } from '@/components/providers';
 import { BRAND } from '@/lib/brand';
+import { SITE_URL } from '@/lib/site';
 import { THEME_INIT_SCRIPT } from '@/lib/theme';
 import './globals.css';
 
@@ -14,6 +15,7 @@ const font = Inter({
 
 // Favicon/icon iOS lấy tự động từ app/icon.png và app/apple-icon.png
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: { default: `${BRAND.name} — ${BRAND.tagline}`, template: `%s · ${BRAND.name}` },
   description: BRAND.description,
   applicationName: BRAND.name,

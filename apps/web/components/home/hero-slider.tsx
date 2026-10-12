@@ -38,10 +38,19 @@ export function HeroSlider({
   const reduced = useSyncExternalStore(subscribeReducedMotion, getReducedMotion, () => false);
   const paused = userPaused || engaged || hidden || reduced;
 
-  // Chỉ tải ảnh đang hiện + ảnh kế tiếp; ảnh đã tải thì giữ lại để quay vòng không tải lại
-  const mounted = useRef(new Set([0, 1 % n]));
+  // Chỉ tải ảnh đang hiện + ảnh kế tiếp; ảnh đã tải thì giữ lại để quay vòng không tải lại.
+  // Ảnh kế tiếp chỉ tải sau khi trang load xong — không tranh băng thông với ảnh đầu (LCP).
+  const [warm, setWarm] = useState(false);
+  const mounted = useRef(new Set([0]));
   mounted.current.add(index);
-  mounted.current.add((index + 1) % n);
+  if (warm) mounted.current.add((index + 1) % n);
+
+  useEffect(() => {
+    const idle = () => ('requestIdleCallback' in window ? requestIdleCallback(() => setWarm(true)) : setTimeout(() => setWarm(true), 200));
+    if (document.readyState === 'complete') idle();
+    else window.addEventListener('load', idle, { once: true });
+    return () => window.removeEventListener('load', idle);
+  }, []);
 
   useEffect(() => {
     const onVisibility = () => setHidden(document.hidden);
@@ -93,7 +102,8 @@ export function HeroSlider({
                 style={{
                   objectPosition: s.focus,
                   transformOrigin: s.focus,
-                  animation: animating ? `ken-burns ${interval + FADE_MS}ms ease-out forwards` : undefined,
+                  // Zoom chỉ bắt đầu sau khi trang tải xong: khung hình đầu vẽ ảnh tĩnh, nhẹ cho GPU → hiện nhanh hơn
+                  animation: animating && warm ? `ken-burns ${interval + FADE_MS}ms ease-out forwards` : undefined,
                   animationPlayState: paused ? 'paused' : 'running',
                 }}
               />

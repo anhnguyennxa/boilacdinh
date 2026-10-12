@@ -1,13 +1,21 @@
 name: CI
 
+# lint → test → build → e2e (API + web) → Lighthouse → deploy staging (tự động khi push main)
+# Deploy production: workflow "Deploy production" chạy tay, cần người duyệt (xem deploy-production.yml)
+
 on:
   push:
     branches: [main]
   pull_request:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     services:
       postgres:
         image: postgres:16-alpine
@@ -18,22 +26,84 @@ jobs:
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U foodhub" --health-interval 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
     env:
+      # API (dùng cho seed, Playwright và Lighthouse)
       DATABASE_URL: postgresql://foodhub:foodhub@localhost:5432/foodhub
+      REDIS_URL: redis://localhost:6379
       JWT_ACCESS_SECRET: ci-access-secret-0123456789abcdef0123
       JWT_REFRESH_SECRET: ci-refresh-secret-0123456789abcdef012
+      REVALIDATE_SECRET: ci-revalidate-secret
+      WEB_URL: http://localhost:3001
+      PAYMENT_MOCK: "true"
+      # Test e2e của API chạy trên database riêng
+      TEST_DATABASE_URL: postgresql://foodhub:foodhub@localhost:5432/foodhub_test
+      TEST_REDIS_URL: redis://localhost:6379/15
+      # Web: địa chỉ API được đóng vào bản build
       API_URL: http://localhost:4000
+      NEXT_PUBLIC_SOCKET_URL: http://localhost:4000
+      NEXT_PUBLIC_SITE_URL: http://localhost:3001
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @foodhub/api prisma:deploy
+      - name: Prisma client + migrate + seed
+        run: |
+          pnpm --filter @foodhub/api prisma:generate
+          pnpm --filter @foodhub/api prisma:deploy
+          pnpm --filter @foodhub/api prisma:seed
+
       - run: pnpm lint
       - run: pnpm test
       - run: pnpm build
 
-  # deploy-staging: thêm bước triển khai (Vercel cho web, Render/VPS cho api) khi có secret
+      - name: E2E API (Supertest + PostgreSQL)
+        run: pnpm --filter @foodhub/api test:e2e
+
+      - name: Cài Chromium cho Playwright
+        run: pnpm --filter @foodhub/web exec playwright install --with-deps chromium
+      - name: E2E web (Playwright — luồng mua hàng)
+        run: pnpm --filter @foodhub/web test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7
+
+      - name: Lighthouse (trang chủ, thực đơn)
+        run: |
+          (cd apps/api && node dist/main.js > /tmp/api.log 2>&1 &)
+          (cd apps/web && npx next start -p 3001 > /tmp/web.log 2>&1 &)
+          for i in $(seq 1 60); do curl -sf http://localhost:3001/ > /dev/null && break; sleep 2; done
+          npx --yes @lhci/cli@0.15.x autorun --config=lighthouserc.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse
+          path: lighthouse/ci
+          retention-days: 14
+
+  deploy-staging:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: staging
+    steps:
+      - name: Gọi deploy hook (API + web)
+        env:
+          API_HOOK: ${{ secrets.STAGING_API_DEPLOY_HOOK }}
+          WEB_HOOK: ${{ secrets.STAGING_WEB_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$API_HOOK$WEB_HOOK" ]; then
+            echo "::notice::Chưa cấu hình STAGING_*_DEPLOY_HOOK — bỏ qua deploy staging"
+            exit 0
+          fi
+          [ -n "$API_HOOK" ] && curl -fsS -X POST "$API_HOOK" > /dev/null && echo "Đã kích hoạt deploy API"
+          [ -n "$WEB_HOOK" ] && curl -fsS -X POST "$WEB_HOOK" > /dev/null && echo "Đã kích hoạt deploy web"

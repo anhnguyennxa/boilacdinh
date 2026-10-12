@@ -46,8 +46,9 @@ export async function MenuView({ category, searchParams }: { category?: string; 
         </Suspense>
       </div>
       <div className="mt-4 space-y-8">
+        <h2 className="sr-only">Danh sách món</h2>
         {products.data.length ? (
-          <ProductGrid products={products.data} />
+          <ProductGrid products={products.data} priorityCount={2} />
         ) : (
           <EmptyState emoji="🥢" title="Chưa có món phù hợp" description="Thử đổi khoảng giá hoặc chọn danh mục khác." />
         )}

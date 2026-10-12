@@ -10,6 +10,15 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(32),
   REVALIDATE_SECRET: z.string().min(8).optional(),
 
+  /** trace | debug | info | warn | error | silent — mặc định info (test: silent) */
+  LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent']).optional(),
+  /** Số lớp proxy đứng trước API (Render/Nginx = 1) để lấy đúng IP khách */
+  TRUST_PROXY: z.coerce.number().int().min(0).default(1),
+  /** Bật Swagger ở production (mặc định tắt) */
+  SWAGGER: z.enum(['true', 'false']).optional(),
+  /** Bỏ trống thì không gửi lỗi lên Sentry */
+  SENTRY_DSN: z.string().url().optional().or(z.literal('').transform(() => undefined)),
+
   // Địa chỉ công khai của API để cổng thanh toán gọi về (return/IPN)
   API_PUBLIC_URL: z.string().url().default('http://localhost:4000'),
   /** Cổng giả lập trên máy dev khi chưa có tài khoản sandbox; luôn tắt ở production. */
