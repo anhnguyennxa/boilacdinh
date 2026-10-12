@@ -1,0 +1,14 @@
+# Không đưa vào build context: dependencies cài lại trong image, file build, bí mật, dữ liệu
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+**/.env
+**/.env.local
+**/*.log
+.git
+backups
+lighthouse
+apps/api/uploads
+apps/web/test-results
+apps/web/playwright-report

@@ -94,7 +94,36 @@ function groupsInput(groups: Group[] = []): Prisma.OptionGroupCreateWithoutProdu
   }));
 }
 
+/**
+ * Production (NODE_ENV=production):
+ *  - chạy với --if-empty khi container khởi động: chỉ seed lần đầu (database chưa có danh mục),
+ *    không ghi đè món/giá admin đã sửa;
+ *  - chỉ tạo tài khoản admin từ SEED_ADMIN_EMAIL + SEED_ADMIN_PASSWORD, không tạo tài khoản thử nghiệm.
+ */
+const PRODUCTION = process.env.NODE_ENV === 'production';
+
+function seedUsers(): { email: string; fullName: string; role: Role; password: string }[] {
+  if (!PRODUCTION) {
+    return [
+      { email: 'admin@foodhub.local', fullName: 'Quản trị FoodHub', role: 'ADMIN', password: 'Admin@12345' },
+      { email: 'staff@foodhub.local', fullName: 'Nhân viên quầy', role: 'STAFF', password: 'Staff@12345' },
+      { email: 'khach@foodhub.local', fullName: 'Khách Thử Nghiệm', role: 'CUSTOMER', password: 'Khach@12345' },
+    ];
+  }
+  const email = process.env.SEED_ADMIN_EMAIL;
+  const password = process.env.SEED_ADMIN_PASSWORD;
+  if (!email || !password || password.length < 12) {
+    console.warn('Bỏ qua tạo admin: đặt SEED_ADMIN_EMAIL và SEED_ADMIN_PASSWORD (≥ 12 ký tự) để tạo tài khoản quản trị.');
+    return [];
+  }
+  return [{ email, fullName: 'Quản trị', role: 'ADMIN', password }];
+}
+
 async function main() {
+  if (process.argv.includes('--if-empty') && (await prisma.category.count()) > 0) {
+    console.log('Database đã có dữ liệu — bỏ qua seed.');
+    return;
+  }
   const catIds = new Map<string, string>();
   for (const [i, c] of categories.entries()) {
     const row = await prisma.category.upsert({
@@ -129,11 +158,7 @@ async function main() {
     }
   }
 
-  const users: { email: string; fullName: string; role: Role; password: string }[] = [
-    { email: 'admin@foodhub.local', fullName: 'Quản trị FoodHub', role: 'ADMIN', password: 'Admin@12345' },
-    { email: 'staff@foodhub.local', fullName: 'Nhân viên quầy', role: 'STAFF', password: 'Staff@12345' },
-    { email: 'khach@foodhub.local', fullName: 'Khách Thử Nghiệm', role: 'CUSTOMER', password: 'Khach@12345' },
-  ];
+  const users = seedUsers();
   for (const u of users) {
     await prisma.user.upsert({
       where: { email: u.email },

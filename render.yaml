@@ -34,6 +34,11 @@ services:
         sync: false
       - key: REVALIDATE_SECRET # trùng với biến cùng tên bên Vercel
         sync: false
+      # Tài khoản admin tạo ở lần khởi động đầu (database trống); mật khẩu ≥ 12 ký tự
+      - key: SEED_ADMIN_EMAIL
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
       - key: CLOUDINARY_URL # bắt buộc trên Render: ổ đĩa container không lưu lâu dài ảnh tải lên
         sync: false
       - key: SENTRY_DSN

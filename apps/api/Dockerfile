@@ -6,11 +6,14 @@ FROM base AS build
 COPY . .
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @foodhub/shared build && pnpm --filter @foodhub/api build
-RUN pnpm deploy --filter @foodhub/api --prod /out && cp -r apps/api/dist apps/api/prisma /out/
+# Gói riêng API + dependencies production (kèm @foodhub/shared đã build)
+RUN pnpm deploy --legacy --filter @foodhub/api --prod /out && cp -r apps/api/dist apps/api/prisma /out/
 
 FROM base AS runtime
 ENV NODE_ENV=production
+WORKDIR /app
 COPY --from=build /out /app
 RUN npx prisma generate
 EXPOSE 4000
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+# Khởi động: áp migration → seed lần đầu (chỉ khi database trống) → chạy API
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/seed/seed.js --if-empty && node dist/main.js"]
