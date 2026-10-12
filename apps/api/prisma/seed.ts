@@ -119,9 +119,24 @@ function seedUsers(): { email: string; fullName: string; role: Role; password: s
   return [{ email, fullName: 'Quản trị', role: 'ADMIN', password }];
 }
 
+/** Tạo tài khoản còn thiếu; tài khoản đã có thì giữ nguyên (không đổi mật khẩu). */
+async function ensureUsers() {
+  let created = 0;
+  for (const u of seedUsers()) {
+    if (await prisma.user.findUnique({ where: { email: u.email } })) continue;
+    await prisma.user.create({
+      data: { email: u.email, fullName: u.fullName, role: u.role, passwordHash: await argon2.hash(u.password) },
+    });
+    created++;
+  }
+  return created;
+}
+
 async function main() {
   if (process.argv.includes('--if-empty') && (await prisma.category.count()) > 0) {
-    console.log('Database đã có dữ liệu — bỏ qua seed.');
+    // Vẫn tạo admin nếu lần đầu chưa khai báo SEED_ADMIN_* (thêm biến rồi deploy lại là có)
+    const created = await ensureUsers();
+    console.log(`Database đã có dữ liệu — bỏ qua seed${created ? `, đã tạo ${created} tài khoản quản trị` : ''}.`);
     return;
   }
   const catIds = new Map<string, string>();
