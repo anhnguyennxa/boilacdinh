@@ -25,7 +25,7 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
         <div className="pt-6">
           <h1 className="text-2xl font-semibold">Xin chào, {user?.fullName.split(' ').at(-1)}</h1>
           <div className="mt-6 grid gap-6 md:grid-cols-[220px_1fr]">
-            <nav className="flex gap-2 overflow-x-auto scrollbar-none md:flex-col">
+            <nav className="relative flex gap-2 overflow-x-auto scrollbar-none md:flex-col">
               {TABS.map(({ href, label, icon: Icon }) => (
                 <Link
                   key={href}

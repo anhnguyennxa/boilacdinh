@@ -17,6 +17,16 @@ test('trang quản trị yêu cầu đăng nhập; admin vào được, khách t
   await page.getByRole('button', { name: /Đăng nhập/ }).click();
   await expect(page).toHaveURL(/\/admin/);
   await expect(page.getByRole('heading', { name: 'Tổng quan' })).toBeVisible();
+
+  // Trên điện thoại: bảng cuộn ngang bên trong khung, trang không được rộng hơn màn hình
+  // (lỗi cũ: nhãn sr-only position:absolute thoát khỏi khung overflow-x-auto không có relative)
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const path of ['/admin/mon', '/admin/danh-muc', '/admin/khuyen-mai', '/admin/don-hang', '/admin/bao-cao']) {
+    await page.goto(path);
+    await page.waitForLoadState('networkidle');
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow, `${path} tràn ngang ${overflow}px trên màn hình 390px`).toBeLessThanOrEqual(0);
+  }
 });
 
 test('trang chủ không bị tràn ngang và có đủ các mục', async ({ page }) => {

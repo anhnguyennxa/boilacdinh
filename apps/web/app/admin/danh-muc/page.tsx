@@ -136,7 +136,7 @@ function Categories() {
         </Button>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-2xl border border-border bg-surface shadow-sm">
+      <div className="relative mt-4 overflow-x-auto rounded-2xl border border-border bg-surface shadow-sm">
         <table className="w-full min-w-[560px] text-sm">
           <thead className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
             <tr>

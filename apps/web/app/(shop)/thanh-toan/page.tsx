@@ -221,7 +221,7 @@ export default function CheckoutPage() {
             <h2 className="font-semibold">2. Thông tin {deliveryType === 'DELIVERY' ? 'giao hàng' : 'người nhận'}</h2>
 
             {deliveryType === 'DELIVERY' && addresses.data && addresses.data.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto scrollbar-none">
+              <div className="relative flex gap-2 overflow-x-auto scrollbar-none">
                 {addresses.data.map((a) => (
                   <button
                     key={a.id}

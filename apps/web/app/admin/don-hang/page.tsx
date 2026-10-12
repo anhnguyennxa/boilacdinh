@@ -193,7 +193,7 @@ export default function AdminOrdersPage() {
         />
       </label>
 
-      <div className="-mx-4 mt-3 overflow-x-auto px-4 scrollbar-none">
+      <div className="relative -mx-4 mt-3 overflow-x-auto px-4 scrollbar-none">
         <div className="flex w-max gap-2">
           {FILTERS.map((f) => (
             <button

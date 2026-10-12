@@ -114,7 +114,7 @@ function ProductsTable() {
         </select>
       </div>
 
-      <div className={cn('mt-4 overflow-x-auto rounded-2xl border border-border bg-surface shadow-sm transition-opacity', isPlaceholderData && 'opacity-60')}>
+      <div className={cn('relative mt-4 overflow-x-auto rounded-2xl border border-border bg-surface shadow-sm transition-opacity', isPlaceholderData && 'opacity-60')}>
         <table className="w-full min-w-[640px] text-sm">
           <thead className="border-b border-border bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>

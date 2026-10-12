@@ -35,7 +35,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               <p className="text-xs text-muted-foreground">{user?.role === 'ADMIN' ? 'Quản trị viên' : 'Nhân viên'}</p>
             </div>
           </div>
-          <nav className="flex gap-1 overflow-x-auto px-2 pb-2 scrollbar-none md:flex-col md:pb-0">
+          <nav className="relative flex gap-1 overflow-x-auto px-2 pb-2 scrollbar-none md:flex-col md:pb-0">
             {nav.map(({ href, label, icon: Icon, exact }) => {
               const active = exact ? pathname === href : pathname.startsWith(href);
               return (

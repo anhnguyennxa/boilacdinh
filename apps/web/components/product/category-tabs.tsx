@@ -15,7 +15,7 @@ export function CategoryTabs({
 }) {
   const tabs = [{ slug: '', name: 'Tất cả', emoji: '🍽️' }, ...categories.map((c) => ({ ...c, emoji: CATEGORY_EMOJI[c.slug] ?? '🍴' }))];
   return (
-    <nav aria-label="Danh mục" className="-mx-4 overflow-x-auto px-4 scrollbar-none">
+    <nav aria-label="Danh mục" className="relative -mx-4 overflow-x-auto px-4 scrollbar-none">
       <ul className="flex w-max gap-2 py-1">
         {tabs.map((t) => {
           const isActive = (active ?? '') === t.slug;

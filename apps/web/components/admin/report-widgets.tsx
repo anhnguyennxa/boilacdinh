@@ -187,7 +187,7 @@ export function RevenueChart({ series, faded }: { series: RevenuePoint[]; faded?
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="max-h-64 overflow-auto">
+          <div className="relative max-h-64 overflow-auto">
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-surface text-left text-xs text-muted-foreground">
                 <tr className="border-b border-border">
