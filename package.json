@@ -11,7 +11,8 @@
     "db:migrate": "pnpm --filter @foodhub/api prisma:migrate",
     "db:seed": "pnpm --filter @foodhub/api prisma:seed",
     "db:seed-demo": "pnpm --filter @foodhub/api prisma:seed-demo --",
-    "db:backup": "node scripts/backup.mjs"
+    "db:backup": "node scripts/backup.mjs",
+    "menu:sync": "node scripts/sync-menu.mjs"
   },
   "devDependencies": {
     "turbo": "^2.5.8",
