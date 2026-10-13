@@ -26,7 +26,7 @@ export function RequireAuth({
   const allowed = status === 'authenticated' && (!roles || (user && roles.includes(user.role)));
 
   useEffect(() => {
-    if (status === 'guest') router.replace(`/dang-nhap?next=${encodeURIComponent(pathname)}`);
+    if (status === 'guest') router.replace(`/dang-nhap?next=${encodeURIComponent(pathname + window.location.search)}`);
     else if (status === 'authenticated' && !allowed) router.replace(redirectTo);
   }, [status, allowed, router, pathname, redirectTo]);
 

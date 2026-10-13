@@ -18,6 +18,13 @@ test('trang quản trị yêu cầu đăng nhập; admin vào được, khách t
   await expect(page).toHaveURL(/\/admin/);
   await expect(page.getByRole('heading', { name: 'Tổng quan' })).toBeVisible();
 
+  // Phân trang thực đơn (20 món/trang): số trang vượt quá → tự về trang cuối, có nhãn "Món a–b / tổng"
+  await page.goto('/admin/mon?page=99');
+  await expect(page).toHaveURL(/\/admin\/mon(\?page=\d+)?$/);
+  await expect(page.getByText(/^Món \d+–\d+ \/ \d+$/)).toBeVisible();
+  const total = Number((await page.getByText(/^Món \d+–\d+ \/ \d+$/).textContent())?.split('/ ')[1]);
+  await expect(page.locator('tbody tr')).toHaveCount(total - 20 * (Math.ceil(total / 20) - 1));
+
   // Trên điện thoại: bảng cuộn ngang bên trong khung, trang không được rộng hơn màn hình
   // (lỗi cũ: nhãn sr-only position:absolute thoát khỏi khung overflow-x-auto không có relative)
   await page.setViewportSize({ width: 390, height: 844 });

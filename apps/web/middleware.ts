@@ -8,7 +8,8 @@ export function middleware(req: NextRequest) {
   if (!req.cookies.has('fh_rt')) {
     const url = req.nextUrl.clone();
     url.pathname = '/dang-nhap';
-    url.search = `?next=${encodeURIComponent(req.nextUrl.pathname)}`;
+    // Giữ cả query (?page=2&category=…) để đăng nhập xong quay về đúng chỗ
+    url.search = `?next=${encodeURIComponent(req.nextUrl.pathname + req.nextUrl.search)}`;
     return NextResponse.redirect(url);
   }
   return NextResponse.next();

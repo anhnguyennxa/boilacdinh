@@ -13,8 +13,10 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Textarea } from '@/components/ui/input';
 import { api } from '@/lib/api-client';
+import { lastListUrl } from '@/lib/admin-list-url';
 import { cn } from '@/lib/utils';
 import { ImageUpload } from './image-upload';
+
 
 const optionSchema = z.object({
   name: z.string().trim().min(1, 'Nhập tên lựa chọn'),
@@ -178,7 +180,7 @@ export function ProductForm({ product }: { product?: ProductDetailDto }) {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       queryClient.invalidateQueries({ queryKey: ['product', saved.slug] });
       toast.success(editing ? 'Đã lưu thay đổi' : `Đã thêm món “${saved.name}”`);
-      router.push('/admin/mon');
+      router.push(lastListUrl());
     },
     onError: (e) => toast.error(e.message),
   });
@@ -188,7 +190,7 @@ export function ProductForm({ product }: { product?: ProductDetailDto }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       toast.success('Đã xóa món');
-      router.push('/admin/mon');
+      router.push(lastListUrl());
     },
     onError: (e) => toast.error(e.message),
   });

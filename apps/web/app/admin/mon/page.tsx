@@ -4,16 +4,20 @@ import type { CategoryDto, Paginated, ProductSummaryDto } from '@foodhub/shared'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Pencil, Plus, Search } from 'lucide-react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { Suspense, useDeferredValue, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useDeferredValue, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { AdminOnly } from '@/components/admin/admin-only';
 import { ProductImage } from '@/components/product/product-image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/misc';
+import { Pagination, rangeLabel } from '@/components/ui/pagination';
+import { rememberListUrl } from '@/lib/admin-list-url';
 import { api, apiRaw } from '@/lib/api-client';
 import { cn, formatVnd } from '@/lib/utils';
+
+const PAGE_SIZE = 20;
 
 type Patch = Partial<Pick<ProductSummaryDto, 'basePrice' | 'isAvailable' | 'isFeatured'>>;
 
@@ -57,14 +61,39 @@ function ProductsTable() {
   const queryClient = useQueryClient();
   const [q, setQ] = useState('');
   const params = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const [category, setCategory] = useState(params.get('category') ?? '');
   const term = useDeferredValue(q.trim());
-  const qs = new URLSearchParams({ limit: '100', sort: 'newest', ...(term ? { q: term } : {}), ...(category ? { category } : {}) });
+  // Trang hiện tại nằm trên URL (?page=) → quay lại từ trang sửa món vẫn đúng trang đang xem
+  const page = Math.max(1, Number(params.get('page')) || 1);
+  const hrefFor = (p: number, cat = category) => {
+    const next = new URLSearchParams(params);
+    if (p > 1) next.set('page', String(p));
+    else next.delete('page');
+    if (cat) next.set('category', cat);
+    else next.delete('category');
+    return `${pathname}${next.size ? `?${next}` : ''}`;
+  };
+  // Đổi từ khóa/danh mục → về trang 1
+  const resetPage = (cat = category) => router.replace(hrefFor(1, cat), { scroll: false });
+  const qs = new URLSearchParams({
+    limit: String(PAGE_SIZE),
+    page: String(page),
+    sort: 'newest',
+    ...(term ? { q: term } : {}),
+    ...(category ? { category } : {}),
+  });
   const { data, isLoading, isPlaceholderData } = useQuery({
-    queryKey: ['admin-products', term, category],
+    queryKey: ['admin-products', term, category, page],
     queryFn: () => apiRaw<Paginated<ProductSummaryDto>>(`/admin/products?${qs}`),
     placeholderData: keepPreviousData,
   });
+  const lastPage = data ? Math.max(1, Math.ceil(data.meta.total / data.meta.limit)) : 1;
+  useEffect(() => {
+    if (data && page > lastPage) router.replace(hrefFor(lastPage), { scroll: false });
+  });
+  useEffect(() => rememberListUrl(hrefFor(page)));
   const categories = useQuery({ queryKey: ['admin-categories'], queryFn: () => api<(CategoryDto & { productCount: number })[]>('/admin/categories') });
 
   const patch = useMutation({
@@ -97,12 +126,20 @@ function ProductsTable() {
         <label className="relative w-full max-w-xs">
           <span className="sr-only">Tìm món</span>
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm theo tên (không cần dấu)" className="h-8 pl-9" />
+          <Input
+            value={q}
+            onChange={(e) => {
+              setQ(e.target.value);
+              if (params.get('page')) resetPage();
+            }} placeholder="Tìm theo tên (không cần dấu)" className="h-8 pl-9" />
         </label>
         <select
           aria-label="Lọc theo danh mục"
           value={category}
-          onChange={(e) => setCategory(e.target.value)}
+          onChange={(e) => {
+            setCategory(e.target.value);
+            resetPage(e.target.value);
+          }}
           className="h-8 rounded-xl border border-border bg-surface px-3 text-sm text-foreground focus:border-primary focus:outline-none"
         >
           <option value="">Mọi danh mục</option>
@@ -170,6 +207,13 @@ function ProductsTable() {
           </tbody>
         </table>
       </div>
+
+      {data && data.meta.total > 0 && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground tabular-nums">Món {rangeLabel(page, data.meta.limit, data.meta.total)}</p>
+          <Pagination page={page} limit={data.meta.limit} total={data.meta.total} hrefFor={hrefFor} />
+        </div>
+      )}
     </div>
   );
 }

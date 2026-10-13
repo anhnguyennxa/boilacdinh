@@ -1,8 +1,5 @@
 import type { ProductSummaryDto } from '@foodhub/shared';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import Link from 'next/link';
 import { Skeleton } from '@/components/ui/misc';
-import { cn } from '@/lib/utils';
 import { ProductCard } from './product-card';
 
 /** 1 cột (mobile) → 2 (sm) → 3 (md) → 4 (lg) */
@@ -36,45 +33,5 @@ export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
         </div>
       ))}
     </div>
-  );
-}
-
-export function Pagination({
-  page,
-  limit,
-  total,
-  hrefFor,
-}: {
-  page: number;
-  limit: number;
-  total: number;
-  hrefFor: (page: number) => string;
-}) {
-  const pages = Math.ceil(total / limit);
-  if (pages <= 1) return null;
-  const item = 'grid size-8 place-items-center rounded-lg border border-border bg-surface text-sm text-muted-foreground transition-colors duration-150 hover:border-border-strong hover:text-foreground';
-  return (
-    <nav aria-label="Phân trang" className="flex items-center justify-center gap-2">
-      {page > 1 && (
-        <Link href={hrefFor(page - 1)} className={item} aria-label="Trang trước">
-          <ChevronLeft className="size-4" />
-        </Link>
-      )}
-      {Array.from({ length: pages }, (_, i) => i + 1).map((p) => (
-        <Link
-          key={p}
-          href={hrefFor(p)}
-          aria-current={p === page ? 'page' : undefined}
-          className={cn(item, p === page && 'border-primary text-primary')}
-        >
-          {p}
-        </Link>
-      ))}
-      {page < pages && (
-        <Link href={hrefFor(page + 1)} className={item} aria-label="Trang sau">
-          <ChevronRight className="size-4" />
-        </Link>
-      )}
-    </nav>
   );
 }

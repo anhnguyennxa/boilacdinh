@@ -4,7 +4,8 @@ import { EmptyState } from '@/components/ui/misc';
 import { getCategories, getProducts } from '@/lib/api';
 import { CategoryTabs } from './category-tabs';
 import { MenuFilters } from './menu-filters';
-import { Pagination, ProductGrid } from './product-grid';
+import { Pagination } from '@/components/ui/pagination';
+import { ProductGrid } from './product-grid';
 
 export type MenuSearchParams = Promise<Record<string, string | string[] | undefined>>;
 
