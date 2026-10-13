@@ -291,7 +291,7 @@ export default function CheckoutPage() {
                 onClick={() => setValue('paymentMethod', 'MOMO')}
                 icon={Wallet}
                 title="Ví MoMo"
-                note={methods?.MOMO ? 'Quét QR bằng app MoMo' : 'Chưa khả dụng'}
+                note={methods?.MOMO ? 'Ví MoMo, thẻ ATM, Visa/Master' : 'Chưa khả dụng'}
               />
             </div>
             {paymentMethod !== 'COD' && methods && (

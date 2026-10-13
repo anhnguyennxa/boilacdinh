@@ -43,7 +43,7 @@ export interface MomoResult {
 
 export function parseResult(payload: MomoResultPayload): MomoResult {
   const code = Number(payload.resultCode);
-  // MoMo cho phép 9000 (đã xác nhận, chờ capture) với giao dịch 2 bước; dùng captureWallet nên 0 là thành công
+  // MoMo cho phép 9000 (đã xác nhận, chờ capture) với giao dịch 2 bước; ta thanh toán 1 bước (payWithMethod) nên 0 là thành công
   return {
     ref: String(payload.orderId),
     amount: Number(payload.amount),
@@ -65,7 +65,8 @@ export async function createPayment(
     orderInfo: p.orderInfo,
     redirectUrl: p.redirectUrl,
     ipnUrl: p.ipnUrl,
-    requestType: 'captureWallet',
+    // payWithMethod: trang MoMo cho khách chọn ví MoMo, thẻ ATM nội địa hoặc Visa/Master (không bắt buộc có app MoMo)
+    requestType: 'payWithMethod',
     extraData: '',
     lang: 'vi',
   };
